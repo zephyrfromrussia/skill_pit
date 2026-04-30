@@ -57,7 +57,7 @@ export default function Skills() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="truncate text-base font-semibold">{s.title}</div>
-                  <div className="mt-2 max-h-12 overflow-hidden text-sm text-zinc-600 dark:text-zinc-300">
+                  <div className="mt-2 line-clamp-3 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
                     {s.description}
                   </div>
                 </div>
