@@ -83,6 +83,14 @@ export class SkillpacksService {
     return `${skillId}/${taskId}`;
   }
 
+  invalidate(skillId?: string) {
+    if (!skillId) {
+      this.cache.clear();
+      return;
+    }
+    this.cache.delete(skillId);
+  }
+
   parseTaskId(compositeTaskId: string) {
     const idx = compositeTaskId.indexOf('/');
     if (idx === -1) return null;
@@ -112,4 +120,3 @@ export class SkillpacksService {
     return null;
   }
 }
-
