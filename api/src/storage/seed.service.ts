@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { mkdirSync } from 'node:fs';
-import { access, cp } from 'node:fs/promises';
+import { access, cp, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { DataPathsService } from './data-paths.service';
 
@@ -13,18 +13,26 @@ export class SeedService implements OnModuleInit {
     mkdirSync(this.paths.tmpDir, { recursive: true });
 
     const seedRoot = path.resolve(process.cwd(), '..', 'seed', 'skill-packs');
-    const seedPack = path.join(seedRoot, 'react-basics');
-    const targetPack = path.join(this.paths.skillsDir, 'react-basics');
-
+    let entries: Array<{ name: string; isDirectory: () => boolean }> = [];
     try {
-      await access(targetPack);
+      entries = (await readdir(seedRoot, { withFileTypes: true })) as any;
+    } catch {
       return;
-    } catch {}
+    }
 
-    try {
-      await access(seedPack);
-      await cp(seedPack, targetPack, { recursive: true });
-    } catch {}
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const skillId = entry.name;
+      const seedPack = path.join(seedRoot, skillId);
+      const targetPack = path.join(this.paths.skillsDir, skillId);
+      try {
+        await access(targetPack);
+        continue;
+      } catch {}
+      try {
+        await access(seedPack);
+        await cp(seedPack, targetPack, { recursive: true });
+      } catch {}
+    }
   }
 }
-

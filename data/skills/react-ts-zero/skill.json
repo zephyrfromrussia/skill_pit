@@ -1,0 +1,131 @@
+{
+  "id": "react-ts-zero",
+  "version": "0.1.0",
+  "title": "React + TypeScript: старт с нуля",
+  "description": "Мини-курс для тех, кто чуть-чуть знает JavaScript, но никогда не писал на React. Учимся писать компоненты на TypeScript, передавать props, хранить состояние, обрабатывать события и рендерить списки.",
+  "tags": ["react", "typescript", "tsx", "jsx", "hooks"],
+  "sections": [
+    {
+      "id": "start",
+      "title": "Старт: компоненты и JSX",
+      "order": 1,
+      "lessons": [
+        {
+          "id": "component-and-jsx",
+          "title": "Компонент и JSX: первый шаг",
+          "order": 1,
+          "markdown": "lessons/component-and-jsx.md",
+          "tasks": [
+            {
+              "id": "hello-card",
+              "title": "HelloCard: первый компонент",
+              "promptMd": "tasks/hello-card.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "component", "title": "Компонент как функция + корректный JSX", "weight": 4 },
+                { "id": "props", "title": "Типизированные props и работа с ними", "weight": 3 },
+                { "id": "ui", "title": "Читаемая разметка и предсказуемое поведение", "weight": 3 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "props-and-children",
+          "title": "Props и композиция: children",
+          "order": 2,
+          "markdown": "lessons/props-and-children.md",
+          "tasks": [
+            {
+              "id": "panel",
+              "title": "Panel: обёртка с children",
+              "promptMd": "tasks/panel.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "typing", "title": "Типы props (включая children)", "weight": 4 },
+                { "id": "composition", "title": "Композиция и гибкость API", "weight": 3 },
+                { "id": "a11y", "title": "Семантика и аккуратные edge-cases", "weight": 3 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "interactive",
+      "title": "Интерактив: состояние и события",
+      "order": 2,
+      "lessons": [
+        {
+          "id": "state-usestate",
+          "title": "Состояние: useState",
+          "order": 1,
+          "markdown": "lessons/state-usestate.md",
+          "tasks": [
+            {
+              "id": "counter",
+              "title": "Counter: состояние и обновления",
+              "promptMd": "tasks/counter.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "state", "title": "Корректные обновления state", "weight": 5 },
+                { "id": "typing", "title": "Типизация state и обработчиков", "weight": 3 },
+                { "id": "ux", "title": "Понятный UX (границы, disabled)", "weight": 2 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "events-and-forms",
+          "title": "События и контролируемые инпуты",
+          "order": 2,
+          "markdown": "lessons/events-and-forms.md",
+          "tasks": [
+            {
+              "id": "controlled-input",
+              "title": "ControlledInput: форма без сюрпризов",
+              "promptMd": "tasks/controlled-input.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "controlled", "title": "Контролируемый инпут + обработка событий", "weight": 5 },
+                { "id": "typing", "title": "Типы событий и пропсов", "weight": 3 },
+                { "id": "feedback", "title": "Понятная обратная связь пользователю", "weight": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lists",
+      "title": "Списки: map и key",
+      "order": 3,
+      "lessons": [
+        {
+          "id": "lists-and-keys",
+          "title": "Списки и ключи: рендерим коллекции",
+          "order": 1,
+          "markdown": "lessons/lists-and-keys.md",
+          "tasks": [
+            {
+              "id": "todo-list",
+              "title": "TodoList: добавить/удалить",
+              "promptMd": "tasks/todo-list.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "data", "title": "Корректная модель данных и операции", "weight": 4 },
+                { "id": "render", "title": "Рендер списка + стабильные key", "weight": 4 },
+                { "id": "typing", "title": "Типизация (items, handlers, events)", "weight": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
