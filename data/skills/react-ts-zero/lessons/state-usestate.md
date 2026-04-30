@@ -4,6 +4,28 @@
 Обычная переменная внутри компонента не “живёт” между рендерами и не запускает перерисовку. Состояние (state) решает обе задачи: хранит значение между рендерами и сообщает React “нужно обновить UI”.
 Hook `useState` возвращает пару: текущее значение и функцию обновления.
 
+Пример:
+
+```tsx
+import { useState } from 'react'
+
+export function Counter() {
+  const [count, setCount] = useState(0)
+
+  return (
+    <div>
+      <div>Счётчик: {count}</div>
+      <button type="button" onClick={() => setCount((c) => c - 1)}>
+        −
+      </button>
+      <button type="button" onClick={() => setCount((c) => c + 1)}>
+        +
+      </button>
+    </div>
+  )
+}
+```
+
 ## Мини-конспект
 - `const [value, setValue] = useState(initial)` — создаёт state.
 - Обновление state запускает re-render.
@@ -21,4 +43,3 @@ Hook `useState` возвращает пару: текущее значение �
 - Реализуешь `Counter` с границами (min/max).
 - Используешь функциональное обновление state.
 - Сделаешь понятный UX: disabled-кнопки на границах.
-

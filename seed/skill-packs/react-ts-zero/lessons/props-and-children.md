@@ -4,6 +4,34 @@
 Props — входные данные компонента. Они “прикручиваются” к компоненту как атрибуты в JSX, а внутри компонента доступны как объект.
 Композиция — главный способ переиспользования в React: вместо наследования ты собираешь UI из маленьких компонентов, а часть разметки передаёшь через `children`.
 
+Пример:
+
+```tsx
+import type { ReactNode } from 'react'
+
+type PanelProps = {
+  title: string
+  children: ReactNode
+}
+
+export function Panel(props: PanelProps) {
+  return (
+    <section>
+      <h2>{props.title}</h2>
+      <div>{props.children}</div>
+    </section>
+  )
+}
+
+export function Demo() {
+  return (
+    <Panel title="Настройки">
+      <button type="button">Сохранить</button>
+    </Panel>
+  )
+}
+```
+
 ## Мини-конспект
 - Props — read-only “снимок данных” на момент рендера, компонент не должен мутировать props.
 - `children` — всё, что вложили внутрь `<MyComp>...</MyComp>`.
@@ -21,4 +49,3 @@ Props — входные данные компонента. Они “прикр
 - Сделаешь компонент `Panel`, который принимает `title` и `children`.
 - Добавишь необязательные props и аккуратные дефолты.
 - Сделаешь API, который удобно читать в JSX.
-

@@ -1,9 +1,9 @@
 {
   "id": "react-ts-zero",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "title": "React + TypeScript: старт с нуля",
-  "description": "Мини-курс для тех, кто чуть-чуть знает JavaScript, но никогда не писал на React. Учимся писать компоненты на TypeScript, передавать props, хранить состояние, обрабатывать события и рендерить списки.",
-  "tags": ["react", "typescript", "tsx", "jsx", "hooks"],
+  "description": "Пошаговый курс для тех, кто чуть-чуть знает JavaScript, но никогда не писал на React. Учимся писать компоненты на TypeScript, передавать props, хранить состояние, обрабатывать события и рендерить списки. Дальше добавляем стилизацию Tailwind, анимации Framer Motion и первые шаги в NestJS. Финальный шаг: связываем React и Notes API в маленький end-to-end фуллстек-модуль.",
+  "tags": ["react", "typescript", "tsx", "jsx", "hooks", "tailwind", "framer-motion", "nestjs", "fullstack"],
   "sections": [
     {
       "id": "start",
@@ -125,7 +125,147 @@
           ]
         }
       ]
+    },
+    {
+      "id": "ui-polish",
+      "title": "UI: Tailwind и анимации",
+      "order": 4,
+      "lessons": [
+        {
+          "id": "tailwind-card",
+          "title": "Tailwind: собираем UI из утилит",
+          "order": 1,
+          "markdown": "lessons/tailwind-card.md",
+          "tasks": [
+            {
+              "id": "pricing-card",
+              "title": "PricingCard: адаптивная карточка",
+              "promptMd": "tasks/pricing-card.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "utilities", "title": "Грамотная композиция utility-классов", "weight": 4 },
+                { "id": "responsive", "title": "Mobile-first адаптив (sm:/md:)", "weight": 3 },
+                { "id": "a11y", "title": "Состояния hover/focus и семантика", "weight": 3 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "motion-basics",
+          "title": "Framer Motion: первая анимация",
+          "order": 2,
+          "markdown": "lessons/motion-basics.md",
+          "tasks": [
+            {
+              "id": "animated-toast",
+              "title": "AnimatedToast: enter/exit анимация",
+              "promptMd": "tasks/animated-toast.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "motion", "title": "Корректное использование motion/AnimatePresence", "weight": 5 },
+                { "id": "state", "title": "Управление состоянием без гонок и багов", "weight": 3 },
+                { "id": "ui", "title": "Аккуратная, читаемая верстка (Tailwind)", "weight": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "title": "Backend: NestJS основы",
+      "order": 5,
+      "lessons": [
+        {
+          "id": "nest-intro",
+          "title": "NestJS: контроллер, сервис и модуль",
+          "order": 1,
+          "markdown": "lessons/nest-intro.md",
+          "tasks": [
+            {
+              "id": "notes-api-skeleton",
+              "title": "Notes API: скелет модуля",
+              "promptMd": "tasks/notes-api-skeleton.md",
+              "answerFormat": "ts",
+              "passScore": 7,
+              "rubric": [
+                { "id": "routing", "title": "Маршруты и DTO (контроллер тонкий)", "weight": 4 },
+                { "id": "di", "title": "DI и разделение ответственности (service)", "weight": 4 },
+                { "id": "module", "title": "Корректная сборка модуля", "weight": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fullstack-notes",
+      "title": "Fullstack: Notes end-to-end (React ↔ NestJS)",
+      "order": 6,
+      "lessons": [
+        {
+          "id": "notes-api-contract",
+          "title": "Контракт Notes API: DTO, ошибки, CRUD",
+          "order": 1,
+          "markdown": "lessons/notes-api-contract.md",
+          "tasks": [
+            {
+              "id": "notes-api-crud",
+              "title": "Notes API: CRUD + ошибки",
+              "promptMd": "tasks/notes-api-crud.md",
+              "answerFormat": "ts",
+              "passScore": 7,
+              "rubric": [
+                { "id": "contract", "title": "Контракт и маршруты (CRUD) соответствуют требованиям", "weight": 4 },
+                { "id": "errors", "title": "Предсказуемые ошибки и статусы (BadRequest/NotFound)", "weight": 3 },
+                { "id": "layers", "title": "Контроллер тонкий, логика в сервисе", "weight": 3 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "notes-fetch-client",
+          "title": "Typed fetch-клиент: загрузка, ошибки, AbortController",
+          "order": 2,
+          "markdown": "lessons/notes-fetch-client.md",
+          "tasks": [
+            {
+              "id": "notes-api-client",
+              "title": "NotesApi: типизированный клиент",
+              "promptMd": "tasks/notes-api-client.md",
+              "answerFormat": "ts",
+              "passScore": 7,
+              "rubric": [
+                { "id": "types", "title": "Типы DTO и сигнатуры функций согласованы", "weight": 4 },
+                { "id": "fetch", "title": "fetch + обработка non-OK ответов и JSON", "weight": 3 },
+                { "id": "abort", "title": "Поддержка AbortSignal/AbortController без утечек", "weight": 3 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "notes-page-ui",
+          "title": "NotesPage: UI, стейт-машина, анимация списка",
+          "order": 3,
+          "markdown": "lessons/notes-page-ui.md",
+          "tasks": [
+            {
+              "id": "notes-page-fullstack",
+              "title": "NotesPage: форма + список + анимация",
+              "promptMd": "tasks/notes-page-fullstack.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "dataflow", "title": "Загрузка/создание/удаление заметок без гонок и багов", "weight": 4 },
+                { "id": "ui", "title": "Адаптивный Tailwind UI без переполнений", "weight": 3 },
+                { "id": "motion", "title": "Анимация списка (AnimatePresence + layout) с корректными key", "weight": 3 }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }
-

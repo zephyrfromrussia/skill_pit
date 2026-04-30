@@ -4,6 +4,34 @@
 События в React обрабатываются через props вроде `onClick`, `onChange`, `onSubmit`. Для форм в React чаще используют контролируемые компоненты: значение поля хранится в state и обновляется через `onChange`.
 TypeScript помогает типизировать события (например, `React.ChangeEvent<HTMLInputElement>`), чтобы не ошибаться с `target.value`.
 
+Пример:
+
+```tsx
+import { useState } from 'react'
+
+export function ControlledName() {
+  const [name, setName] = useState('')
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        alert(`Отправлено: ${name}`)
+      }}
+    >
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Имя…"
+      />
+      <button type="submit" disabled={name.trim().length === 0}>
+        Отправить
+      </button>
+    </form>
+  )
+}
+```
+
 ## Мини-конспект
 - Обработчик передают как функцию: `onClick={handle}` (не вызывай при рендере).
 - Для `<form>` используй `onSubmit`, и часто нужно `e.preventDefault()`.
@@ -21,4 +49,3 @@ TypeScript помогает типизировать события (напри�
 - Сделаешь контролируемый инпут с лимитом длины.
 - Покажешь пользователю подсказки: осталось символов, ошибка при превышении.
 - Аккуратно типизируешь события и props.
-
