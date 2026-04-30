@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { apiGet, apiPostJson, type AttemptDto, type CheckResponse, type TaskDto } from '@/api/client'
 import { Markdown } from '@/components/Markdown'
@@ -6,13 +6,17 @@ import { useSettingsStore } from '@/store/settings'
 
 export default function Task() {
   const { skillId, taskId } = useParams()
-  const { llmBaseUrl, llmModel } = useSettingsStore()
+  const { llmBaseUrl, llmModel, setLlmModel } = useSettingsStore()
   const [task, setTask] = useState<TaskDto | null>(null)
   const [attempts, setAttempts] = useState<AttemptDto[] | null>(null)
   const [userAnswer, setUserAnswer] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<CheckResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [llmHealth, setLlmHealth] = useState<LlmHealthResponse | null>(null)
+  const [checkingLlm, setCheckingLlm] = useState(false)
+  const [modelQuery, setModelQuery] = useState('')
+  const draftTimer = useRef<number | null>(null)
 
   useEffect(() => {
     if (!skillId || !taskId) return
@@ -43,6 +47,49 @@ export default function Task() {
     }
   }, [skillId, taskId])
 
+  useEffect(() => {
+    if (!skillId || !taskId) return
+    const key = draftKey(skillId, taskId)
+    const raw = localStorage.getItem(key)
+    if (raw && raw.trim().length > 0) setUserAnswer(raw)
+  }, [skillId, taskId])
+
+  useEffect(() => {
+    if (!skillId || !taskId) return
+    if (draftTimer.current) window.clearTimeout(draftTimer.current)
+    draftTimer.current = window.setTimeout(() => {
+      localStorage.setItem(draftKey(skillId, taskId), userAnswer)
+    }, 250)
+    return () => {
+      if (draftTimer.current) window.clearTimeout(draftTimer.current)
+    }
+  }, [skillId, taskId, userAnswer])
+
+  useEffect(() => {
+    if (!llmBaseUrl) {
+      setLlmHealth(null)
+      return
+    }
+    let cancelled = false
+    setCheckingLlm(true)
+    apiGet<LlmHealthResponse>(`llm/health?baseUrl=${encodeURIComponent(llmBaseUrl)}`)
+      .then((res) => {
+        if (cancelled) return
+        setLlmHealth(res)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setLlmHealth({ ok: false })
+      })
+      .finally(() => {
+        if (cancelled) return
+        setCheckingLlm(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [llmBaseUrl])
+
   const latestAttempt = useMemo(() => (attempts && attempts.length > 0 ? attempts[0] : null), [attempts])
   const resultView = useMemo(() => {
     if (!task || !result) return null
@@ -56,13 +103,41 @@ export default function Task() {
     }
   }, [result, task])
 
+  const modelOptions = useMemo(() => extractModelIds(llmHealth?.models), [llmHealth?.models])
+  const filteredModels = useMemo(() => {
+    if (!modelQuery.trim()) return modelOptions
+    const q = modelQuery.trim().toLowerCase()
+    return modelOptions.filter((m) => m.toLowerCase().includes(q))
+  }, [modelOptions, modelQuery])
+
   if (!skillId || !taskId) return null
+
+  async function refreshLlmHealth() {
+    if (!llmBaseUrl) return
+    setCheckingLlm(true)
+    try {
+      const res = await apiGet<LlmHealthResponse>(`llm/health?baseUrl=${encodeURIComponent(llmBaseUrl)}`)
+      setLlmHealth(res)
+      return res
+    } finally {
+      setCheckingLlm(false)
+    }
+  }
 
   async function submit() {
     if (!task) return
+    if (!llmBaseUrl || !llmModel) {
+      setError('Укажи endpoint и модель в настройках, затем попробуй ещё раз.')
+      return
+    }
     setSubmitting(true)
     setError(null)
     try {
+      const preflight = await refreshLlmHealth().catch(() => null)
+      if (preflight && !preflight.ok) {
+        setError('LM Studio не отвечает. Проверь, что сервер запущен (Developer → Status: Running) и endpoint указан верно.')
+        return
+      }
       const res = await apiPostJson<CheckResponse>('check', {
         skillId,
         taskId,
@@ -131,6 +206,75 @@ export default function Task() {
                 className="mt-2 w-full resize-y rounded-2xl border border-zinc-200 bg-white px-4 py-3 font-mono text-sm leading-6 text-zinc-900 outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-600"
                 placeholder="Вставь сюда свой ответ (текст или код)…"
               />
+
+              <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400">LM Studio</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <span
+                        className={
+                          llmHealth?.ok
+                            ? 'rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100'
+                            : 'rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100'
+                        }
+                      >
+                        {llmHealth?.ok ? 'Подключено' : 'Не проверено'}
+                      </span>
+                      <span className="truncate text-xs text-zinc-600 dark:text-zinc-300">{llmBaseUrl}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => refreshLlmHealth().catch(() => setError('Не удалось проверить подключение к LM Studio.'))}
+                    disabled={checkingLlm}
+                    className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                  >
+                    {checkingLlm ? 'Проверяю…' : 'Проверить'}
+                  </button>
+                </div>
+
+                {llmHealth?.ok && modelOptions.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Модель для проверки</div>
+                      <div className="text-xs text-zinc-600 dark:text-zinc-300">Нажми, чтобы выбрать</div>
+                    </div>
+
+                    <input
+                      value={modelQuery}
+                      onChange={(e) => setModelQuery(e.target.value)}
+                      placeholder="Фильтр моделей…"
+                      className="mt-2 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-600"
+                    />
+
+                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {filteredModels.slice(0, 8).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setLlmModel(m)}
+                          className={
+                            m === llmModel
+                              ? 'rounded-xl border border-zinc-900 bg-zinc-900 px-3 py-2 text-left text-xs font-medium text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
+                              : 'rounded-xl border border-zinc-200 bg-white px-3 py-2 text-left text-xs text-zinc-800 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900'
+                          }
+                          title={m}
+                        >
+                          <div className="truncate font-mono">{m}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!llmBaseUrl && (
+                  <div className="mt-3 text-xs text-zinc-600 dark:text-zinc-300">
+                    Укажи endpoint в <Link to="/settings" className="underline underline-offset-4">Настройках</Link>.
+                  </div>
+                )}
+              </div>
+
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
@@ -139,6 +283,25 @@ export default function Task() {
                   className="inline-flex items-center rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
                 >
                   {submitting ? 'Проверяю…' : 'Проверить в LM Studio'}
+                </button>
+                {latestAttempt && (
+                  <button
+                    type="button"
+                    onClick={() => setUserAnswer(latestAttempt.userAnswer)}
+                    className="inline-flex items-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                  >
+                    Вставить последнюю попытку
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserAnswer('')
+                    localStorage.removeItem(draftKey(skillId, taskId))
+                  }}
+                  className="inline-flex items-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                >
+                  Очистить
                 </button>
                 <Link
                   to="/settings"
@@ -254,6 +417,15 @@ export default function Task() {
                         <span className="text-xs text-zinc-600 dark:text-zinc-300">{a.passed ? 'Сдано' : 'Не сдано'}</span>
                       </div>
                     </div>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setUserAnswer(a.userAnswer)}
+                        className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                      >
+                        Использовать как черновик
+                      </button>
+                    </div>
                     {renderAttemptRubric(a.rubricBreakdownJson)}
                     <div className="mt-3 rounded-xl bg-zinc-50 p-3 text-xs text-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-200">
                       <pre className="whitespace-pre-wrap font-mono">{a.userAnswer.slice(0, 800)}</pre>
@@ -282,6 +454,22 @@ export default function Task() {
 
 function stripLeadingH1(md: string) {
   return md.replace(/^# .*\n+/, '')
+}
+
+type LlmHealthResponse = { ok: boolean; models?: unknown }
+
+function extractModelIds(models: unknown) {
+  const root = models as any
+  const data = Array.isArray(root?.data) ? root.data : []
+  return data
+    .map((m: any) => String(m?.id ?? ''))
+    .filter(Boolean)
+    .slice()
+    .sort((a: string, b: string) => a.localeCompare(b))
+}
+
+function draftKey(skillId: string, taskId: string) {
+  return `draft:${skillId}/${taskId}`
 }
 
 function getMasteryLabel(
