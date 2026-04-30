@@ -79,6 +79,12 @@ export class CheckService {
       parsed = JSON.parse(extractJsonObject(llmRaw.content));
     } catch (e) {
       const feedback = `Не удалось выполнить проверку через LM Studio. Проверь, что сервер запущен и endpoint указан верно.\n\nТехническая причина: ${(e as Error)?.message ?? String(e)}`;
+      const rubricBreakdown = (task.rubric ?? []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        score0to10: 0,
+        notes: 'Проверка не выполнена: LM Studio недоступен.',
+      }));
       this.db.insertAttempt({
         id: attemptId,
         taskId: task.taskId,
@@ -87,7 +93,7 @@ export class CheckService {
         score: 0,
         passed: 0,
         feedbackMd: feedback,
-        rubricBreakdownJson: JSON.stringify([]),
+        rubricBreakdownJson: JSON.stringify(rubricBreakdown),
         modelInfoJson: JSON.stringify({ model: null, usage: null }),
       });
       return {
@@ -95,7 +101,7 @@ export class CheckService {
         score0to10: 0,
         passed: false,
         feedbackMd: feedback,
-        rubricBreakdown: [],
+        rubricBreakdown,
         modelInfo: { model: '', usage: null },
       };
     }
@@ -150,4 +156,3 @@ function clampNumber(value: unknown, min: number, max: number) {
   if (typeof value !== 'number' || Number.isNaN(value)) return null;
   return Math.min(max, Math.max(min, value));
 }
-

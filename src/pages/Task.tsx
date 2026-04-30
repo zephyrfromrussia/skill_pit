@@ -44,6 +44,17 @@ export default function Task() {
   }, [skillId, taskId])
 
   const latestAttempt = useMemo(() => (attempts && attempts.length > 0 ? attempts[0] : null), [attempts])
+  const resultView = useMemo(() => {
+    if (!task || !result) return null
+    const mastery = getMasteryLabel(result.score0to10, task.passScore)
+    const rubricSorted = (result.rubricBreakdown ?? []).slice().sort((a, b) => a.score0to10 - b.score0to10)
+    const focus = rubricSorted.slice(0, 3)
+    return {
+      mastery,
+      focus,
+      rubricSorted,
+    }
+  }, [result, task])
 
   if (!skillId || !taskId) return null
 
@@ -107,7 +118,7 @@ export default function Task() {
           </div>
 
           <div className="mt-5">
-            <Markdown content={task.promptMd} />
+            <Markdown content={stripLeadingH1(task.promptMd)} />
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
@@ -146,12 +157,69 @@ export default function Task() {
                     <span className="text-zinc-600 dark:text-zinc-300">Оценка</span>
                     <span className="font-semibold">{result.score0to10}/10</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                     <span className="text-zinc-600 dark:text-zinc-300">Статус</span>
-                    <span className={result.passed ? 'font-semibold text-emerald-700 dark:text-emerald-300' : 'font-semibold text-amber-700 dark:text-amber-300'}>
-                      {result.passed ? 'Сдано' : 'Не сдано'}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {resultView?.mastery && <MasteryBadge mastery={resultView.mastery} />}
+                      <span
+                        className={
+                          result.passed
+                            ? 'rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100'
+                            : 'rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100'
+                        }
+                      >
+                        {result.passed ? 'Сдано' : 'Не сдано'}
+                      </span>
+                    </div>
                   </div>
+
+                  {resultView && resultView.focus.length > 0 && (
+                    <div className="rounded-xl bg-white p-3 text-sm dark:bg-zinc-950">
+                      <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                        Фокус на улучшение
+                      </div>
+                      <div className="mt-2 space-y-2">
+                        {resultView.focus.map((c) => (
+                          <div key={c.id} className="rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+                            <div className="flex items-center justify-between gap-3 text-xs">
+                              <div className="min-w-0 truncate font-medium text-zinc-800 dark:text-zinc-100">
+                                {c.title}
+                              </div>
+                              <div className="shrink-0 text-zinc-600 dark:text-zinc-300">{c.score0to10}/10</div>
+                            </div>
+                            {c.notes && (
+                              <div className="mt-1 text-xs leading-5 text-zinc-600 dark:text-zinc-300">
+                                {truncate(c.notes, 160)}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {resultView && resultView.rubricSorted.length > 0 && (
+                    <div className="rounded-xl bg-white p-3 text-sm dark:bg-zinc-950">
+                      <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Рубрика</div>
+                      <div className="mt-2 space-y-2">
+                        {resultView.rubricSorted.map((c) => (
+                          <div key={c.id} className="space-y-1">
+                            <div className="flex items-center justify-between gap-3 text-xs">
+                              <div className="min-w-0 truncate text-zinc-700 dark:text-zinc-200">{c.title}</div>
+                              <div className="shrink-0 text-zinc-600 dark:text-zinc-300">{c.score0to10}/10</div>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-900">
+                              <div
+                                className="h-2 rounded-full bg-zinc-900 dark:bg-zinc-100"
+                                style={{ width: `${Math.round((c.score0to10 / 10) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="rounded-xl bg-white p-3 text-sm dark:bg-zinc-950">
                     <Markdown content={result.feedbackMd || '—'} />
                   </div>
@@ -186,6 +254,7 @@ export default function Task() {
                         <span className="text-xs text-zinc-600 dark:text-zinc-300">{a.passed ? 'Сдано' : 'Не сдано'}</span>
                       </div>
                     </div>
+                    {renderAttemptRubric(a.rubricBreakdownJson)}
                     <div className="mt-3 rounded-xl bg-zinc-50 p-3 text-xs text-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-200">
                       <pre className="whitespace-pre-wrap font-mono">{a.userAnswer.slice(0, 800)}</pre>
                     </div>
@@ -211,3 +280,69 @@ export default function Task() {
   )
 }
 
+function stripLeadingH1(md: string) {
+  return md.replace(/^# .*\n+/, '')
+}
+
+function getMasteryLabel(
+  score0to10: number,
+  passScore: number,
+): 'Mastered' | 'Progressing' | 'Getting Started' {
+  if (score0to10 >= passScore) return 'Mastered'
+  if (score0to10 >= Math.max(0, passScore - 2)) return 'Progressing'
+  return 'Getting Started'
+}
+
+function MasteryBadge(props: { mastery: 'Mastered' | 'Progressing' | 'Getting Started' }) {
+  if (props.mastery === 'Mastered') {
+    return (
+      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
+        Mastered
+      </span>
+    )
+  }
+  if (props.mastery === 'Progressing') {
+    return (
+      <span className="rounded-full border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-800 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
+        Progressing
+      </span>
+    )
+  }
+  return (
+    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+      Getting Started
+    </span>
+  )
+}
+
+function renderAttemptRubric(rubricBreakdownJson: string) {
+  const parsed = safeJsonParse<Array<{ id: string; title: string; score0to10: number }>>(rubricBreakdownJson)
+  if (!parsed || parsed.length === 0) return null
+  const focus = parsed.slice().sort((a, b) => a.score0to10 - b.score0to10).slice(0, 2)
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {focus.map((c) => (
+        <span
+          key={c.id}
+          className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-1 text-[11px] text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-200"
+          title={c.title}
+        >
+          {truncate(c.title, 28)} · {Math.round(c.score0to10)}/10
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function safeJsonParse<T>(raw: string): T | null {
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function truncate(input: string, max: number) {
+  if (input.length <= max) return input
+  return `${input.slice(0, max - 1)}…`
+}

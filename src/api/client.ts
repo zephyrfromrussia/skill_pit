@@ -81,6 +81,24 @@ export type CheckResponse = {
   modelInfo: { model: string; usage: unknown }
 }
 
+export type ContinueResponse = {
+  ok: true
+  continue: null | {
+    skillId: string
+    lessonId: string
+    lastViewedAt: number
+    completed: boolean
+  }
+}
+
+export type SkillProgressResponse = {
+  ok: true
+  skillId: string
+  viewedLessonIds: string[]
+  completedLessonIds: string[]
+  lastLessonId: string | null
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`/api/${path.replace(/^\//, '')}`, {
     method: 'GET',
@@ -102,4 +120,3 @@ export async function apiPostJson<T>(path: string, body: unknown): Promise<T> {
   if (!res.ok) throw new Error(await res.text())
   return (await res.json()) as T
 }
-

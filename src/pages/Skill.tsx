@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { apiGet, type SkillPack } from '@/api/client'
+import { apiGet, type SkillPack, type SkillProgressResponse } from '@/api/client'
 
 export default function Skill() {
   const { skillId } = useParams()
   const [skill, setSkill] = useState<SkillPack | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [progress, setProgress] = useState<SkillProgressResponse | null>(null)
 
   useEffect(() => {
     if (!skillId) return
@@ -19,6 +20,20 @@ export default function Skill() {
         if (cancelled) return
         setError(e instanceof Error ? e.message : String(e))
       })
+    return () => {
+      cancelled = true
+    }
+  }, [skillId])
+
+  useEffect(() => {
+    if (!skillId) return
+    let cancelled = false
+    apiGet<SkillProgressResponse>(`progress/skills/${skillId}`)
+      .then((res) => {
+        if (cancelled) return
+        setProgress(res)
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -96,7 +111,19 @@ export default function Skill() {
                                 {(lesson.tasks?.length ?? 0) > 0 ? `${lesson.tasks.length} заданий` : 'Без заданий'}
                               </div>
                             </div>
-                            <div className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">Открыть</div>
+                            <div className="shrink-0 text-right">
+                              {progress?.completedLessonIds.includes(lesson.id) ? (
+                                <div className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
+                                  Пройдено
+                                </div>
+                              ) : progress?.viewedLessonIds.includes(lesson.id) ? (
+                                <div className="rounded-full border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
+                                  Просмотрено
+                                </div>
+                              ) : (
+                                <div className="text-xs text-zinc-500 dark:text-zinc-400">Открыть</div>
+                              )}
+                            </div>
                           </div>
                         </Link>
                       ))}
@@ -115,4 +142,3 @@ export default function Skill() {
     </div>
   )
 }
-
