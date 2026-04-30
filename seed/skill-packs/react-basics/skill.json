@@ -1,0 +1,64 @@
+{
+  "id": "react-basics",
+  "version": "0.1.0",
+  "title": "React: основы",
+  "description": "База по компонентам, JSX, состоянию и эффектам. Мини-курс для тренировки фундаментальных навыков в React.",
+  "tags": ["react", "jsx", "hooks"],
+  "sections": [
+    {
+      "id": "components",
+      "title": "Компоненты и JSX",
+      "order": 1,
+      "lessons": [
+        {
+          "id": "jsx-and-props",
+          "title": "JSX, props и композиция",
+          "order": 1,
+          "markdown": "lessons/jsx-and-props.md",
+          "tasks": [
+            {
+              "id": "button-component",
+              "title": "Компонент Button",
+              "promptMd": "tasks/button-component.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "api", "title": "API компонента и типы", "weight": 4 },
+                { "id": "jsx", "title": "Корректный JSX и состояния", "weight": 3 },
+                { "id": "dx", "title": "Удобство использования", "weight": 3 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hooks",
+      "title": "Состояние и эффекты",
+      "order": 2,
+      "lessons": [
+        {
+          "id": "state-and-effect",
+          "title": "useState и useEffect на практике",
+          "order": 1,
+          "markdown": "lessons/state-and-effect.md",
+          "tasks": [
+            {
+              "id": "debounced-search",
+              "title": "Debounced Search (без библиотек)",
+              "promptMd": "tasks/debounced-search.md",
+              "answerFormat": "tsx",
+              "passScore": 7,
+              "rubric": [
+                { "id": "logic", "title": "Корректность debounce-логики", "weight": 5 },
+                { "id": "cleanup", "title": "Очистка эффектов и таймеров", "weight": 3 },
+                { "id": "ux", "title": "Понятный UX (loading/empty)", "weight": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
